@@ -1,0 +1,27 @@
+{
+  "name": "igroot-app-notify",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "keywords": [
+    "igroot"
+  ],
+  "scripts": {
+    "build": "npx babel src --out-dir dist"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "igroot": "^1.6.6",
+    "socket.io-client": "^2.2.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@babel/polyfill": "^7.4.4",
+    "@babel/preset-env": "^7.4.5",
+    "@babel/preset-react": "^7.0.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  }
+}
