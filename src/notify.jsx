@@ -245,7 +245,7 @@ export default (config = {}, Component) => {
                   top: y - 25,
                   left: x - 25
                 }}
-              ><Icon type="bell" style={{ fontSize: 25 }} /></Button>
+              ><Icon type="bell" style={{ color: '#fff', fontSize: 25 }} /></Button>
             </NotifyPopover>
           </React.Fragment>
         )
@@ -253,7 +253,7 @@ export default (config = {}, Component) => {
 
       onDrag = throttle(e => {
         clearTimeout(this.trim)
-        this.trim = this.willTrim(e.pageX, e.pageY, 150)
+        this.trim = this.willTrim(e.clientX, e.clientY, 150)
       }, 100)
 
       willTrim = (x, y, wait) => setTimeout(() => this.setState({ x: document.body.clientWidth - 40, y }), wait)
