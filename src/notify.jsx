@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOM from 'react-dom'
 import { Button, Popover, Badge, Avatar, Tabs, List, Icon, Modal, notification } from 'igroot'
 import io from 'socket.io-client'
 
@@ -33,16 +34,15 @@ class NotifyPopover extends React.PureComponent {
       headers: new Headers({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         app_id: app,
-        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",//localStorage.getItem('jwtToken'),
+        token: localStorage.getItem('jwtToken'),
         user_id: user
       })
     }).then(res => res.json())
       .catch(error => console.error('Error:', error))
       .then(({ code, data: token, msg }) => {
-        console.log(token)
         if (code !== 0) return console.error('Error:', msg)
 
-        const socket = this.socket = io(url + '/io', { query: {token} })
+        const socket = this.socket = io(url + '/io', { query: { token } })
         const handleNewMsg = res => {
           const send = item => {
             const { title, describe } = item
@@ -78,31 +78,28 @@ class NotifyPopover extends React.PureComponent {
   }
 
   render() {
-    const { appData, personData, disabled, data } = this.state
-    const unreadLen = [...appData, ...personData]
-      .filter(item => !item.read)
-      .length
+    const { appData, personData, data } = this.state
 
     return (
-      <Popover
-        overlayClassName="notify-popover"
-        content={(
-          <Tabs defaultActiveKey="app">
-            <TabPane key="app" tab="应用">
-              {this.renderList(appData, 'app')}
-            </TabPane>
+      <React.Fragment>
+        <Popover
+          overlayClassName="notify-popover"
+          content={(
+            <Tabs defaultActiveKey="app">
+              <TabPane key="app" tab="应用">
+                {this.renderList(appData, 'app')}
+              </TabPane>
 
-            <TabPane key="person" tab="个人">
-              {this.renderList(personData, 'person')}
-            </TabPane>
-          </Tabs>
-        )}
-        trigger="click"
-        {...this.props}
-      >
-        <Badge count={unreadLen}>
-          {React.cloneElement(this.props.children, { disabled })}
-        </Badge>
+              <TabPane key="person" tab="个人">
+                {this.renderList(personData, 'person')}
+              </TabPane>
+            </Tabs>
+          )}
+          trigger="click"
+          {...this.props}
+        >
+          {this.renderBtn()}
+        </Popover>
 
         <Modal
           title={data.title}
@@ -118,8 +115,30 @@ class NotifyPopover extends React.PureComponent {
             </p>
           ) : null}
         </Modal>
-      </Popover>
+      </React.Fragment>
     )
+  }
+
+  renderBtn = () => {
+    const { appData, personData, disabled } = this.state
+    const unreadLen = [...appData, ...personData]
+      .filter(item => !item.read)
+      .length
+
+    return this.props.fixed
+      ? React.cloneElement(
+        this.props.children,
+        { disabled },
+        <Badge count={unreadLen}>
+          {this.props.children.props.children}
+        </Badge>
+      )
+
+      : (
+        <Badge count={unreadLen}>
+          {React.cloneElement(this.props.children, { disabled })}
+        </Badge>
+      )
   }
 
   renderList = (dataSource = [], type) => {
@@ -198,10 +217,10 @@ class NotifyPopover extends React.PureComponent {
   }
 }
 
-export default (config = {}) => Component => {
-  // 装饰器用法
-  if (Component instanceof React.Component)
-    return class NotifyWarp extends Component {
+export default (config = {}, Component) => {
+  // 直接调用
+  if (Component === undefined) {
+    class NotifyWarp extends React.PureComponent {
       state = {
         x: document.body.clientWidth - 40,
         y: 100,
@@ -212,9 +231,7 @@ export default (config = {}) => Component => {
 
         return (
           <React.Fragment>
-            {super.render()}
-
-            <NotifyPopover {...config}>
+            <NotifyPopover fixed {...config}>
               <Button
                 draggable
                 size="large"
@@ -225,11 +242,10 @@ export default (config = {}) => Component => {
                 style={{
                   width: 50,
                   height: 50,
-                  fontSize: 25,
                   top: y - 25,
                   left: x - 25
                 }}
-              ><Icon type="bell" /></Button>
+              ><Icon type="bell" style={{ fontSize: 25 }} /></Button>
             </NotifyPopover>
           </React.Fragment>
         )
@@ -243,7 +259,15 @@ export default (config = {}) => Component => {
       willTrim = (x, y, wait) => setTimeout(() => this.setState({ x: document.body.clientWidth - 40, y }), wait)
     }
 
-  // 组件用法
+    const root = document.createElement('div')
+
+    root.setAttribute('class', 'app-notify-root')
+    document.body.appendChild(root)
+    ReactDOM.render(<NotifyWarp/>, root)
+    return
+  }
+
+  // 组件包裹用法
   if (React.isValidElement(Component))
     return (
       <NotifyPopover {...config}>
@@ -251,7 +275,7 @@ export default (config = {}) => Component => {
       </NotifyPopover>
     )
 
-  throw new TypeError('Notify functions should be passed in a class or react component!')
+  throw new TypeError('Notify functions should be passed in a react component or undefined!')
 }
 
 // 函数节流
