@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { Button, Popover, Badge, Avatar, Tabs, List, Icon, Modal, notification } from 'igroot'
+import { Button, Popover, Badge, Avatar, Tabs, List, Icon, Modal, Alert, notification } from 'igroot'
 import io from 'socket.io-client'
 
 const { TabPane } = Tabs
@@ -107,11 +107,14 @@ class NotifyPopover extends React.PureComponent {
           onCancel={this.hideModal}
           footer={null}
         >
-          <p>{data.describe}</p>
+          <Alert message={data.describe} type="info" />
+
           {data.data ? (
-            <p>
-              <h4>{data.data.version}</h4>
-              {data.data.logs.map((info, i) => <p key={i}>{info}</p>)}
+            <p style={{ marginTop: 10 }}>
+              <h2>{data.data.version}</h2>
+              <ul>
+                {data.data.logs.map((info, i) => <li key={i}>{info}</li>)}
+              </ul>
             </p>
           ) : null}
         </Modal>
@@ -173,7 +176,7 @@ class NotifyPopover extends React.PureComponent {
                 description={
                   <div>
                     <div>{item.describe}</div>
-                    <div>{item.lastTime}</div>
+                    <div>{item.createdAt.slice(0, 10)}</div>
                   </div>
                 }
               />
