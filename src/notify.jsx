@@ -25,7 +25,7 @@ class NotifyPopover extends React.PureComponent {
   }
 
   componentDidMount() {
-    const { url, user, app } = this.props
+    const { url, app, token } = this.props
 
     if (!url) return
 
@@ -34,8 +34,7 @@ class NotifyPopover extends React.PureComponent {
       headers: new Headers({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         app_id: app,
-        token: localStorage.getItem('jwtToken'),
-        user_id: user
+        token: token || JSON.parse(localStorage.getItem('jwtToken'))
       })
     }).then(res => res.json())
       .catch(error => console.error('Error:', error))
@@ -50,14 +49,18 @@ class NotifyPopover extends React.PureComponent {
             notification.open({
               message: title,
               description: describe,
-              duration: 10
+              duration: 5
             })
           }
 
           const isArray = Array.isArray(res)
           const data = (isArray ? res[0] : res) || {}
 
-          isArray ? res.forEach(send) : send(res)
+          isArray
+            ? res.length > 3
+            ? notification.open({ message: `您有 ${res.length} 条未读通知`, duration: 5 })
+            : res.forEach(send)
+            : send(res)
           if (data.app_id) this.setState({ appData: Array.prototype.concat(res, this.state.appData) })
           if (data.user_id) this.setState({ personData: Array.prototype.concat(res, this.state.personData) })
         }
@@ -110,12 +113,12 @@ class NotifyPopover extends React.PureComponent {
           <Alert message={data.describe} type="info" />
 
           {data.data ? (
-            <p style={{ marginTop: 10 }}>
+            <div style={{ marginTop: 10 }}>
               <h2>{data.data.version}</h2>
               <ul>
                 {data.data.logs.map((info, i) => <li key={i}>{info}</li>)}
               </ul>
-            </p>
+            </div>
           ) : null}
         </Modal>
       </React.Fragment>
@@ -176,7 +179,7 @@ class NotifyPopover extends React.PureComponent {
                 description={
                   <div>
                     <div>{item.describe}</div>
-                    <div>{item.createdAt.slice(0, 10)}</div>
+                    <div>{item.createdAt ? item.createdAt.slice(0, 10) : '刚刚'}</div>
                   </div>
                 }
               />
@@ -227,6 +230,10 @@ export default (config = {}, Component) => {
       state = {
         x: document.body.clientWidth - 40,
         y: 100,
+      }
+
+      componentDidMount() {
+        window.addEventListener('resize', e => this.setState({ x: document.body.clientWidth - 40 }))
       }
 
       render() {
