@@ -32,3 +32,5 @@ bower_components/
 # IDE/Editor data
 .idea
 package-lock.json
+babel.config.js
+src/notify_bak.jsx

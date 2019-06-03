@@ -8,7 +8,7 @@
 
 .notify-popover {
   width: 336px;
-  z-index: 999;
+  z-index: 999 !important;
 
   .ant-popover-inner-content {padding: 0;}
   .ant-tabs-bar {margin-bottom: 0;}

@@ -61,6 +61,7 @@ class NotifyPopover extends React.PureComponent {
             ? notification.open({ message: `您有 ${res.length} 条未读通知`, duration: 5 })
             : res.forEach(send)
             : send(res)
+
           if (data.app_id) this.setState({ appData: Array.prototype.concat(res, this.state.appData) })
           if (data.user_id) this.setState({ personData: Array.prototype.concat(res, this.state.personData) })
         }
@@ -82,6 +83,9 @@ class NotifyPopover extends React.PureComponent {
 
   render() {
     const { appData, personData, data } = this.state
+    const appLen = appData.filter(item => !item.read).length
+    const personLen = personData.filter(item => !item.read).length
+    const unreadLen = appLen + personLen
 
     return (
       <React.Fragment>
@@ -89,11 +93,21 @@ class NotifyPopover extends React.PureComponent {
           overlayClassName="notify-popover"
           content={(
             <Tabs defaultActiveKey="app">
-              <TabPane key="app" tab="应用">
+              <TabPane key="app" tab={(
+                <React.Fragment>
+                  应用
+                  <Badge style={{ left: -5, top: -10 }} count={appLen} />
+                </React.Fragment>
+              )}>
                 {this.renderList(appData, 'app')}
               </TabPane>
 
-              <TabPane key="person" tab="个人">
+              <TabPane key="person" tab={(
+                <React.Fragment>
+                  个人
+                  <Badge style={{ left: -5, top: -10 }} count={personLen} />
+                </React.Fragment>
+              )}>
                 {this.renderList(personData, 'person')}
               </TabPane>
             </Tabs>
@@ -101,7 +115,7 @@ class NotifyPopover extends React.PureComponent {
           trigger="click"
           {...this.props}
         >
-          {this.renderBtn()}
+          {this.renderBtn(unreadLen)}
         </Popover>
 
         <Modal
@@ -125,23 +139,20 @@ class NotifyPopover extends React.PureComponent {
     )
   }
 
-  renderBtn = () => {
-    const { appData, personData, disabled } = this.state
-    const unreadLen = [...appData, ...personData]
-      .filter(item => !item.read)
-      .length
+  renderBtn = length => {
+    const { disabled } = this.state
 
     return this.props.fixed
       ? React.cloneElement(
         this.props.children,
         { disabled },
-        <Badge count={unreadLen}>
+        <Badge count={length}>
           {this.props.children.props.children}
         </Badge>
       )
 
       : (
-        <Badge count={unreadLen}>
+        <Badge count={length}>
           {React.cloneElement(this.props.children, { disabled })}
         </Badge>
       )
@@ -157,28 +168,20 @@ class NotifyPopover extends React.PureComponent {
           renderItem={item => (
             <Item
               key={item._id}
-              onClick={() => this.showDetail(item)}
+              onClick={() => this.showDetail(item, type)}
               className={`list-item${item.read ? ' list-item-read' : ''}`}
             >
               <Item.Meta
                 avatar={<Avatar style={{ backgroundColor: item.color }} icon={item.icon} />}
-                title={(
-                  <div style={{ position: 'relative' }}>
-                    {item.title}
-                    <Button
-                      ghost
-                      size="small"
-                      type="primary"
-                      disabled={item.read}
-                      onClick={this.onRead(item, type)}
-                      style={{ position: 'absolute', right: 0 }}
-                    >已读</Button>
-                  </div>
-                )}
-
+                title={<div style={{ position: 'relative' }}>{item.title}</div>}
                 description={
                   <div>
-                    <div>{item.describe}</div>
+                    <div style={{
+                      width: 225,
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden'
+                    }}>{item.describe}</div>
                     <div>{item.createdAt ? item.createdAt.slice(0, 10) : '刚刚'}</div>
                   </div>
                 }
@@ -196,16 +199,15 @@ class NotifyPopover extends React.PureComponent {
       )
   }
 
-  showDetail = item => {
+  showDetail = (item, type) => {
+    !item.read && this.onRead(item, type)
     this.showModal(item)
   }
 
   showModal = data => this.setState({ visible: true, data })
   hideModal = () => this.setState({ visible: false })
 
-  onRead = (item, type) => e => {
-    e.stopPropagation()
-
+  onRead = (item, type) => {
     let data, signal
     if (type === 'app') {
       data = 'appData'
