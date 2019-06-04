@@ -66,14 +66,13 @@ class NotifyPopover extends React.PureComponent {
           if (data.user_id) this.setState({ personData: Array.prototype.concat(res, this.state.personData) })
         }
 
-        socket.on('connect', () => {
-          console.log('%csuccess', 'padding: 2px 5px; background: #099424; color: #fff; border-radius: 5px;', 'socket建连成功')
-
+        socket.once('connect', () => {
           this.setState({ disabled: false })
           socket.emit(SIGNAL.CHECK_USER_MSG)
           socket.emit(SIGNAL.CHECK_APP_MSG)
         })
 
+        socket.on('connect', () => console.log('%csuccess', 'padding: 2px 5px; background: #099424; color: #fff; border-radius: 5px;', 'socket建连成功'))
         socket.on(SIGNAL.NEW_USER_MSG, handleNewMsg)
         socket.on(SIGNAL.NEW_APP_MSG, handleNewMsg)
         socket.on(SIGNAL.CHECK_USER_MSG, handleNewMsg)
